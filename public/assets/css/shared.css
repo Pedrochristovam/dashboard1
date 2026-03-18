@@ -1,0 +1,6 @@
+/*
+ * Transitional shared stylesheet.
+ * The visual system was moved to the public asset pipeline first so the
+ * application can migrate safely while the domain architecture is refactored.
+ */
+@import url("../../../assets/css/app.css");
