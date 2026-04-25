@@ -51,6 +51,17 @@ function innovation_default_dataset(): array
     ];
 }
 
+function innovation_evidence_type_options(): array
+{
+    return [
+        'documento' => 'Documento',
+        'caso_uso' => 'Caso de uso',
+        'treinamento' => 'Treinamento',
+        'resultado' => 'Resultado medido',
+        'padronizacao' => 'Padronização',
+    ];
+}
+
 function innovation_default_summary(): string
 {
     return 'Sem dados lançados até o momento para este setor. Use esta visão para acompanhar a evolução assim que as iniciativas começarem a ser registradas.';
@@ -61,11 +72,28 @@ function innovation_document_progress_step(): int
     return 10;
 }
 
+function innovation_sector_id_from_name(string $name): string
+{
+    $normalized = preg_replace('/[^a-z0-9]+/i', '_', text_lower($name)) ?? '';
+    $normalized = trim((string) $normalized, '_');
+    return $normalized !== '' ? $normalized : 'setor_' . date('His');
+}
+
 function innovation_normalize_document(array $document, int $position): array
 {
     $label = trim((string) ($document['label'] ?? ''));
     if ($label === '') {
         $label = 'Documento ' . ($position + 1);
+    }
+
+    $evidenceType = trim((string) ($document['evidence_type'] ?? 'documento'));
+    if (!array_key_exists($evidenceType, innovation_evidence_type_options())) {
+        $evidenceType = 'documento';
+    }
+
+    $department = trim((string) ($document['author_department'] ?? 'outro'));
+    if (!array_key_exists($department, auth_department_options())) {
+        $department = 'outro';
     }
 
     return [
@@ -74,6 +102,11 @@ function innovation_normalize_document(array $document, int $position): array
         'content' => trim((string) ($document['content'] ?? '')),
         'created_at' => trim((string) ($document['created_at'] ?? '')),
         'updated_at' => trim((string) ($document['updated_at'] ?? '')),
+        'author_name' => trim((string) ($document['author_name'] ?? '')),
+        'author_department' => $department,
+        'author_department_label' => (string) auth_department_options()[$department],
+        'evidence_type' => $evidenceType,
+        'evidence_type_label' => (string) innovation_evidence_type_options()[$evidenceType],
     ];
 }
 

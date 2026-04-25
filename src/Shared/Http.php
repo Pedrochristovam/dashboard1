@@ -20,7 +20,7 @@ function app_redirect(array $query = []): void
 
 function app_active_view(?string $requestedView): string
 {
-    $allowedViews = ['posts', 'innovation', 'automation'];
+    $allowedViews = ['posts', 'innovation', 'automation', 'manager'];
     $activeView = $requestedView ?? 'posts';
 
     return in_array($activeView, $allowedViews, true) ? $activeView : 'posts';

@@ -1,0 +1,17 @@
+# Arquivos enviados pelos usuários (não versionar)
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Ambiente
+.env
+.env.local
+
+# Sistema
+Thumbs.db
+.DS_Store
+*.log
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json

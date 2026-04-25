@@ -33,6 +33,24 @@ function text_lower(string $value): string
     return strtolower($value);
 }
 
+/**
+ * Formata data/hora local (usa o fuso definido em bootstrap, ex.: America/Sao_Paulo).
+ */
+function app_format_datetime(?string $value, string $empty = '—'): string
+{
+    $value = trim((string) $value);
+    if ($value === '') {
+        return $empty;
+    }
+
+    $ts = strtotime($value);
+    if ($ts === false) {
+        return $empty;
+    }
+
+    return date('d/m/Y H:i', $ts);
+}
+
 function truncate_text(string $text, int $limit = 150): string
 {
     $clean = trim(preg_replace('/\s+/', ' ', $text) ?? $text);

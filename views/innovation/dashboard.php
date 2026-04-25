@@ -1,6 +1,14 @@
+<?php
+$isManagerContext = $isManagerContext ?? false;
+$contextView = $isManagerContext ? 'manager' : 'innovation';
+$contextTab = $isManagerContext ? ($managerTab ?? 'innovation') : null;
+?>
 <div class="topbar">
     <form class="searchbar" method="get">
-        <input type="hidden" name="view" value="innovation">
+        <input type="hidden" name="view" value="<?= h($contextView) ?>">
+        <?php if ($contextTab !== null): ?>
+            <input type="hidden" name="tab" value="<?= h($contextTab) ?>">
+        <?php endif; ?>
         <span aria-hidden="true">📊</span>
         <input type="text" value="Dashboard executivo de inovação por setor" readonly>
     </form>
@@ -16,15 +24,27 @@
             <strong>Monitoramento de inovação por setor</strong>
             <div class="muted">Acompanhe a evolução, compare áreas e identifique onde acelerar iniciativas.</div>
         </div>
-        <form class="period-filter" method="get">
-            <input type="hidden" name="view" value="innovation">
-            <label for="period" class="muted">Período</label>
-            <select id="period" name="period" onchange="this.form.submit()">
-                <?php foreach ($periods as $value => $label): ?>
-                    <option value="<?= h($value) ?>" <?= $selectedPeriod === $value ? 'selected' : '' ?>><?= h($label) ?></option>
-                <?php endforeach; ?>
-            </select>
-        </form>
+        <div class="innovation-toolbar-actions">
+            <form class="period-filter" method="get">
+                <input type="hidden" name="view" value="<?= h($contextView) ?>">
+                <?php if ($contextTab !== null): ?>
+                    <input type="hidden" name="tab" value="<?= h($contextTab) ?>">
+                <?php endif; ?>
+                <label for="period" class="muted">Período</label>
+                <select id="period" name="period" onchange="this.form.submit()">
+                    <?php foreach ($periods as $value => $label): ?>
+                        <option value="<?= h($value) ?>" <?= $selectedPeriod === $value ? 'selected' : '' ?>><?= h($label) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </form>
+            <form class="innovation-create-sector" method="post">
+                <input type="hidden" name="dashboard_context" value="innovation">
+                <input type="hidden" name="action" value="create_sector">
+                <input type="hidden" name="period" value="<?= h($selectedPeriod) ?>">
+                <input name="sector_name" type="text" placeholder="Novo setor">
+                <button class="btn-primary" type="submit">Criar setor</button>
+            </form>
+        </div>
     </div>
 
     <div class="innovation-overview">
@@ -130,6 +150,16 @@
                                         <label for="improvements-<?= h((string) $sector['id']) ?>">Conteúdo do documento</label>
                                         <span class="editor-mode-badge" data-editor-mode>Pronto para novo documento</span>
                                     </div>
+                                    <div class="sector-editor-meta">
+                                        <div class="field">
+                                            <label for="evidence-type-<?= h((string) $sector['id']) ?>">Tipo de evidência</label>
+                                            <select id="evidence-type-<?= h((string) $sector['id']) ?>" name="evidence_type">
+                                                <?php foreach ($evidenceTypeOptions as $value => $label): ?>
+                                                    <option value="<?= h($value) ?>"><?= h($label) ?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    </div>
                                     <textarea
                                         id="improvements-<?= h((string) $sector['id']) ?>"
                                         name="improvements"
@@ -150,9 +180,25 @@
                                     </div>
                                 </div>
 
+                                <?php if ($documents !== []): ?>
+                                    <div class="sector-document-history">
+                                        <?php foreach (array_slice(array_reverse($documents), 0, 2) as $document): ?>
+                                            <div class="sector-history-item">
+                                                <strong><?= h((string) $document['label']) ?></strong>
+                                                <span class="muted">
+                                                    <?= h((string) ($document['author_name'] ?? 'Colaborador')) ?>
+                                                    • <?= h((string) ($document['author_department_label'] ?? 'Nao identificado')) ?>
+                                                    • <?= h((string) ($document['evidence_type_label'] ?? 'Documento')) ?>
+                                                </span>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                <?php endif; ?>
+
                                 <div class="sector-card-actions">
                                     <button class="btn-primary sector-save-btn" type="submit">Salvar documento</button>
                                     <button class="btn-tertiary sector-delete-btn" type="submit" data-delete-document hidden>Excluir documento</button>
+                                    <button class="btn-tertiary sector-delete-btn" type="button" data-delete-sector>Excluir setor</button>
                                     <button class="btn-tertiary sector-detail-trigger" type="button">Ver detalhes</button>
                                 </div>
                             </form>
@@ -198,6 +244,29 @@
                             <span class="muted"><?= (int) $sector['progress'] ?>% de evolução</span>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </div>
+
+            <div class="panel attention-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Departamentos que mais contribuem</h2>
+                        <p>Volume de documentos e evidências registrados por área no período.</p>
+                    </div>
+                </div>
+                <div class="attention-list">
+                    <?php foreach ($contributorDepartments as $departmentLabel => $count): ?>
+                        <div class="attention-item">
+                            <strong><?= h((string) $departmentLabel) ?></strong>
+                            <span class="muted"><?= (int) $count ?> contribuições</span>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if ($contributorDepartments === []): ?>
+                        <div class="attention-item">
+                            <strong>Sem contribuições ainda</strong>
+                            <span class="muted">Os dados aparecerão conforme os setores forem atualizados.</span>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>

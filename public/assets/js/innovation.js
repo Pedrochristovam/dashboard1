@@ -36,6 +36,13 @@
             sectorModalHighlights.appendChild(badge);
         });
 
+        window.AppUi.trackEvent('innovation', 'modal_open', {
+            targetType: 'sector',
+            targetId: card.dataset.sectorId || '',
+            meta: {
+                sector_label: card.dataset.name || '',
+            },
+        });
         window.AppUi.setModalState(sectorModal, true);
     }
 
@@ -313,6 +320,22 @@
                 const actionInput = card.querySelector('[data-sector-action-input]');
                 if (actionInput) {
                     actionInput.value = 'delete_document';
+                }
+            });
+        }
+
+        const deleteSectorButton = card.querySelector('[data-delete-sector]');
+        if (deleteSectorButton) {
+            deleteSectorButton.addEventListener('click', () => {
+                if (!window.confirm('Deseja excluir este setor e todos os documentos associados?')) {
+                    return;
+                }
+
+                const actionInput = card.querySelector('[data-sector-action-input]');
+                const form = card.querySelector('.sector-form');
+                if (actionInput && form) {
+                    actionInput.value = 'delete_sector';
+                    form.submit();
                 }
             });
         }

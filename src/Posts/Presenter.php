@@ -11,3 +11,13 @@ function posts_category_labels(): array
         'dados' => 'Dados & BI',
     ];
 }
+
+function posts_status_labels(): array
+{
+    return [
+        '' => 'Todos os status',
+        'draft' => 'Rascunho',
+        'published' => 'Publicado',
+        'archived' => 'Arquivado',
+    ];
+}

@@ -3,14 +3,15 @@
     class="publisher-shell <?= $isPublisherOpen ? 'is-open' : '' ?>"
     data-open="<?= $isPublisherOpen ? 'true' : 'false' ?>"
 >
-    <div class="panel form-panel">
-        <div class="panel-header">
+    <div class="panel form-panel form-panel--composer">
+        <div class="panel-header panel-header--composer">
             <div>
-                <h2><?= $editingPost !== null ? 'Editar publicação' : 'Nova publicação' ?></h2>
-                <p>Cadastre conhecimento útil com links, prompts, dicas práticas, documento e fotos. Os anexos continuam opcionais.</p>
+                <p class="panel-kicker">Novo conteúdo</p>
+                <h2>Nova publicação</h2>
+                <p class="panel-lead">Compartilhe uma ferramenta, material, vídeo ou o prompt que deu certo — tudo em um fluxo leve e opcional passo a passo.</p>
             </div>
             <div class="panel-header-actions">
-                <span class="badge"><?= $editingPost !== null ? 'Edição editorial' : 'Colaborativo' ?></span>
+                <span class="badge badge--soft">Colaborativo</span>
                 <button class="close-panel-btn" type="button" data-close-publisher aria-label="Fechar painel">✕</button>
             </div>
         </div>
@@ -19,10 +20,11 @@
             <div class="status error"><?= h(implode(' ', $errors)) ?></div>
         <?php endif; ?>
 
-        <form method="post" enctype="multipart/form-data">
+        <form class="composer-form" method="post" enctype="multipart/form-data">
             <input type="hidden" name="dashboard_context" value="posts">
             <input type="hidden" name="action" value="<?= $editingPost !== null ? 'update' : 'create' ?>">
             <input type="hidden" name="post_id" value="<?= h((string) $formData['post_id']) ?>">
+            <input type="hidden" name="status" value="published">
             <div class="form-grid">
                 <div class="field">
                     <label for="tool_name">Nome da ferramenta</label>
@@ -37,21 +39,6 @@
                         <option value="texto" <?= $formData['category'] === 'texto' ? 'selected' : '' ?>>Texto</option>
                         <option value="dados" <?= $formData['category'] === 'dados' ? 'selected' : '' ?>>Dados</option>
                     </select>
-                </div>
-
-                <div class="field">
-                    <label for="post_status">Status editorial</label>
-                    <select id="post_status" name="status">
-                        <?php foreach ($statusLabels as $value => $label): ?>
-                            <?php if ($value === '') { continue; } ?>
-                            <option value="<?= h($value) ?>" <?= $formData['status'] === $value ? 'selected' : '' ?>><?= h($label) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label for="article_url">Link de matéria ou referência</label>
-                    <input id="article_url" name="article_url" type="url" placeholder="https://site-da-materia.com" value="<?= h($formData['article_url']) ?>">
                 </div>
 
                 <div class="field full">
@@ -69,26 +56,31 @@
                     <textarea id="description" name="description" placeholder="O que esta ferramenta faz?"><?= h($formData['description']) ?></textarea>
                 </div>
 
-                <div class="field full">
-                    <label for="learning_tips">Dicas úteis e aprendizado</label>
-                    <textarea id="learning_tips" name="learning_tips" placeholder="Boas práticas, erros comuns e caminhos para aprender mais rápido."><?= h($formData['learning_tips']) ?></textarea>
-                </div>
-
-                <div class="field full">
-                    <label for="prompts_used">Prompts utilizados</label>
-                    <textarea id="prompts_used" name="prompts_used" placeholder="Registre aqui prompts que geraram bons resultados."><?= h($formData['prompts_used']) ?></textarea>
+                <div class="field full field-prompt-optional">
+                    <label for="prompts_used">
+                        Prompt usado para tais resultados
+                        <span class="field-optional-badge">opcional</span>
+                    </label>
+                    <textarea
+                        id="prompts_used"
+                        name="prompts_used"
+                        rows="4"
+                        class="input-prompt"
+                        placeholder="Se quiser, compartilhe o prompt (ou atalhos) que geraram bons resultados — ajuda o time a reproduzir a mesma qualidade."
+                    ><?= h($formData['prompts_used']) ?></textarea>
+                    <small class="field-help">Deixe em branco se preferir manter o processo privado. O conteúdo aparece no detalhe da publicação.</small>
                 </div>
 
                 <div class="field">
                     <label for="support_document">Documento complementar</label>
                     <input id="support_document" name="support_document" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt">
-                    <small class="field-help">Opcional. Aceita PDF, Word, PowerPoint, Excel ou TXT com ate 10 MB.</small>
+                    <small class="field-help">Opcional. Material de apoio com até 10 MB.</small>
                 </div>
 
                 <div class="field">
-                    <label for="gallery_photos">Fotos da publicacao</label>
+                    <label for="gallery_photos">Fotos da publicação</label>
                     <input id="gallery_photos" name="gallery_photos[]" type="file" accept="image/*" multiple>
-                    <small class="field-help">Opcional. Envie ate 8 imagens para gerar um carrossel de visualizacao.</small>
+                    <small class="field-help">Opcional. Envie imagens para mostrar exemplos práticos.</small>
                 </div>
             </div>
 
@@ -102,7 +94,7 @@
             </div>
 
             <div class="actions">
-                <button class="btn-primary" type="submit"><?= $editingPost !== null ? 'Salvar alterações' : 'Publicar ferramenta' ?></button>
+                <button class="btn-primary" type="submit"><?= $editingPost !== null ? 'Salvar publicação' : 'Publicar ferramenta' ?></button>
             </div>
         </form>
     </div>
@@ -132,42 +124,6 @@
                     <strong><?= count($posts) ?></strong>
                     <span class="muted">Resultados exibidos</span>
                 </div>
-                <div class="stat">
-                    <strong><?= $publishedCount ?></strong>
-                    <span class="muted">Publicadas</span>
-                </div>
-                <div class="stat">
-                    <strong><?= $draftCount ?></strong>
-                    <span class="muted">Em rascunho</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="panel stats-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Boas práticas</h2>
-                    <p>Mantenha o conteúdo útil, objetivo e fácil de localizar por categoria e busca.</p>
-                </div>
-            </div>
-            <div class="tag-wrap">
-                <span class="tag">Resumo objetivo</span>
-                <span class="tag">Link confiável</span>
-                <span class="tag">Categoria correta</span>
-                <span class="tag">Relevância interna</span>
-            </div>
-        </div>
-
-        <div class="panel stats-panel">
-            <div class="panel-header">
-                <div>
-                    <h2>Departamento destaque</h2>
-                    <p>Área com maior volume de publicações cadastradas neste protótipo.</p>
-                </div>
-            </div>
-            <div class="stat">
-                <strong><?= h($topDepartmentName) ?></strong>
-                <span class="muted"><?= $topDepartmentCount ?> publicação(ões)</span>
             </div>
         </div>
     </div>

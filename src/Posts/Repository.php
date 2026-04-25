@@ -18,9 +18,16 @@ function posts_default_items(): array
             'tool_url' => 'https://www.midjourney.com/',
             'category' => 'design',
             'author' => 'João D.',
+            'department' => 'diretoria',
+            'status' => 'published',
+            'learning_tips' => 'Comece testando prompts curtos, valide o estilo desejado e só depois avance para campanhas complexas.',
+            'prompts_used' => 'High-end corporate campaign, realistic lighting, premium art direction, modern brand palette.',
+            'article_url' => 'https://docs.midjourney.com/',
             'published_at' => '2026-03-14 10:15',
             'thumbnail' => 'https://img.youtube.com/vi/K4TOrB7at0Y/hqdefault.jpg',
             'preview_title' => 'Guia completo: Como usar IA para Automação em 2024',
+            'document' => null,
+            'photos' => [],
         ],
         [
             'id' => 2,
@@ -31,9 +38,16 @@ function posts_default_items(): array
             'tool_url' => 'https://www.make.com/en',
             'category' => 'automacao',
             'author' => 'Maria I.',
+            'department' => 'gerat',
+            'status' => 'published',
+            'learning_tips' => 'Mapeie primeiro o processo ideal no papel antes de montar o fluxo no Make.',
+            'prompts_used' => 'Classifique esta mensagem por intenção e responda em tom corporativo.',
+            'article_url' => 'https://www.make.com/en/help',
             'published_at' => '2026-03-18 08:40',
             'thumbnail' => 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=900&q=80',
             'preview_title' => '',
+            'document' => null,
+            'photos' => [],
         ],
         [
             'id' => 3,
@@ -44,9 +58,16 @@ function posts_default_items(): array
             'tool_url' => 'https://github.com/Sinaptik-AI/pandas-ai',
             'category' => 'dados',
             'author' => 'Ricardo B.',
+            'department' => 'gecov',
+            'status' => 'published',
+            'learning_tips' => 'Padronize nomes de colunas e valide a origem do dado antes de consultar via linguagem natural.',
+            'prompts_used' => 'Analise este dataframe e destaque anomalias por período e unidade.',
+            'article_url' => 'https://docs.pandas-ai.com/',
             'published_at' => '2026-03-17 17:05',
             'thumbnail' => 'https://images.unsplash.com/photo-1527430253228-e93688616381?auto=format&fit=crop&w=900&q=80',
             'preview_title' => '',
+            'document' => null,
+            'photos' => [],
         ],
         [
             'id' => 4,
@@ -57,9 +78,16 @@ function posts_default_items(): array
             'tool_url' => '',
             'category' => 'texto',
             'author' => 'Ana M.',
+            'department' => 'rh',
+            'status' => 'published',
+            'learning_tips' => 'Guarde exemplos de prompts bons e ruins para acelerar a aprendizagem do time.',
+            'prompts_used' => 'Explique este tema como um consultor especialista, com passos e exemplos práticos.',
+            'article_url' => '',
             'published_at' => '2026-03-16 13:20',
             'thumbnail' => 'https://img.youtube.com/vi/3i1lNJPY-4Q/hqdefault.jpg',
             'preview_title' => 'Vídeo aula sobre prompt engineering avançado',
+            'document' => null,
+            'photos' => [],
         ],
     ];
 }
@@ -77,11 +105,78 @@ function posts_normalize_item(array $post): array
         $post['summary'] = truncate_text((string) ($post['description'] ?? ''), 125);
     }
 
+    $department = trim((string) ($post['department'] ?? 'outro'));
+    if (!array_key_exists($department, auth_department_options())) {
+        $department = 'outro';
+    }
+    $post['department'] = $department;
+    $post['department_label'] = (string) auth_department_options()[$department];
+
+    $status = trim((string) ($post['status'] ?? 'published'));
+    if (!array_key_exists($status, posts_status_labels())) {
+        $status = 'published';
+    }
+    $post['status'] = $status;
+
+    $post['learning_tips'] = trim((string) ($post['learning_tips'] ?? ''));
+    $post['prompts_used'] = trim((string) ($post['prompts_used'] ?? ''));
+    $post['article_url'] = trim((string) ($post['article_url'] ?? ($post['material_url'] ?? '')));
+
+    $document = $post['document'] ?? null;
+    if (!is_array($document)) {
+        $document = null;
+    }
+
+    if (is_array($document)) {
+        $documentPath = trim((string) ($document['path'] ?? ''));
+        $documentUrl = trim((string) ($document['url'] ?? ''));
+        $documentName = trim((string) ($document['name'] ?? ''));
+
+        $post['document'] = [
+            'path' => $documentPath,
+            'url' => $documentUrl !== '' ? $documentUrl : ($documentPath !== '' ? app_public_url($documentPath) : ''),
+            'name' => $documentName !== '' ? $documentName : 'Documento anexo',
+        ];
+    } else {
+        $post['document'] = null;
+    }
+
+    $post['photos'] = array_values(array_filter(
+        array_map(
+            static function ($photo): ?array {
+                if (is_string($photo)) {
+                    $photo = ['path' => $photo];
+                }
+
+                if (!is_array($photo)) {
+                    return null;
+                }
+
+                $photoPath = trim((string) ($photo['path'] ?? ''));
+                $photoUrl = trim((string) ($photo['url'] ?? ''));
+                if ($photoPath === '' && $photoUrl === '') {
+                    return null;
+                }
+
+                return [
+                    'path' => $photoPath,
+                    'url' => $photoUrl !== '' ? $photoUrl : app_public_url($photoPath),
+                ];
+            },
+            is_array($post['photos'] ?? null) ? $post['photos'] : []
+        ),
+        static fn(?array $photo): bool => $photo !== null
+    ));
+
     if (!isset($post['thumbnail']) || trim((string) $post['thumbnail']) === '') {
-        $preview = get_link_preview((string) $post['video_url']);
-        $post['thumbnail'] = $preview['thumbnail'] !== ''
-            ? $preview['thumbnail']
-            : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80';
+        if ($post['photos'] !== []) {
+            $post['thumbnail'] = (string) $post['photos'][0]['url'];
+        } else {
+            $preview = get_link_preview((string) $post['video_url']);
+            $post['thumbnail'] = $preview['thumbnail'] !== ''
+                ? $preview['thumbnail']
+                : 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=900&q=80';
+        }
     }
 
     if (!isset($post['preview_title'])) {

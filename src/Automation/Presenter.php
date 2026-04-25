@@ -55,6 +55,8 @@ function automation_status_labels(): array
         'triagem' => 'Em triagem',
         'planejado' => 'Planejado',
         'em_execucao' => 'Em execução',
+        'aguardando_area' => 'Aguardando área',
+        'concluido' => 'Concluído',
     ];
 }
 
@@ -64,6 +66,8 @@ function automation_status_badge(string $status): string
         'triagem' => 'review',
         'planejado' => 'planned',
         'em_execucao' => 'progress',
+        'aguardando_area' => 'neutral',
+        'concluido' => 'done',
         default => 'new',
     };
 }
